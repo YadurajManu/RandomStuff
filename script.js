@@ -1,3 +1,6 @@
+// Verify script loading
+console.log('Finance Tracker script loaded');
+
 // Initialize transactions from localStorage or empty array
 let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 let budget = JSON.parse(localStorage.getItem('budget')) || {
@@ -451,65 +454,81 @@ function displayGoals() {
 function addTransaction(e) {
     e.preventDefault();
     
-    // Form validation
-    const description = document.getElementById('description').value.trim();
-    const amount = parseFloat(document.getElementById('amount').value);
-    const type = document.getElementById('type').value;
-    const category = document.getElementById('category').value;
-    const notes = document.getElementById('notes').value.trim();
-    const isRecurring = document.getElementById('recurring').checked;
-    const recurringFrequency = document.getElementById('recurringFrequency').value;
-    
-    if (!description || !amount || !category) {
-        showNotification('Please fill in all required fields', 'error');
-        return;
+    try {
+        // Form validation
+        const description = document.getElementById('description').value.trim();
+        const amount = parseFloat(document.getElementById('amount').value);
+        const type = document.getElementById('type').value;
+        const category = document.getElementById('category').value;
+        const notes = document.getElementById('notes').value.trim();
+        const isRecurring = document.getElementById('recurring').checked;
+        const recurringFrequency = document.getElementById('recurringFrequency').value;
+        
+        if (!description || !amount || !category) {
+            showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        if (amount <= 0) {
+            showNotification('Amount must be greater than 0', 'error');
+            return;
+        }
+        
+        const transaction = {
+            id: Date.now(),
+            description,
+            amount,
+            type,
+            category,
+            notes,
+            date: new Date().toISOString(),
+            recurring: isRecurring,
+            recurringFrequency: isRecurring ? recurringFrequency : null,
+            status: 'completed',
+            tags: [], // For future categorization
+            attachments: [], // For future receipt uploads
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        // Check if localStorage is available
+        if (typeof localStorage === 'undefined') {
+            showNotification('Local storage is not available. Please check your browser settings.', 'error');
+            return;
+        }
+        
+        try {
+            transactions.push(transaction);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            
+            // Update savings if it's an income transaction
+            if (type === 'income') {
+                savings += amount;
+                localStorage.setItem('savings', savings);
+            }
+            
+            // Handle recurring transaction
+            if (isRecurring) {
+                scheduleRecurringTransaction(transaction);
+            }
+            
+            displayTransactions();
+            updateSummary();
+            updateCharts();
+            updateProgressBars();
+            displayGoals();
+            
+            // Reset form
+            transactionForm.reset();
+            showNotification('Transaction added successfully');
+        } catch (storageError) {
+            console.error('Error saving to localStorage:', storageError);
+            showNotification('Error saving transaction. Please check your browser storage settings.', 'error');
+        }
+    } catch (error) {
+        console.error('Error in addTransaction:', error);
+        showNotification('An error occurred while adding the transaction.', 'error');
     }
-    
-    if (amount <= 0) {
-        showNotification('Amount must be greater than 0', 'error');
-        return;
-    }
-    
-    const transaction = {
-        id: Date.now(),
-        description,
-        amount,
-        type,
-        category,
-        notes,
-        date: new Date().toISOString(),
-        recurring: isRecurring,
-        recurringFrequency: isRecurring ? recurringFrequency : null,
-        status: 'completed',
-        tags: [], // For future categorization
-        attachments: [], // For future receipt uploads
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
-    
-    transactions.push(transaction);
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-    
-    // Update savings if it's an income transaction
-    if (type === 'income') {
-        savings += amount;
-        localStorage.setItem('savings', savings);
-    }
-    
-    // Handle recurring transaction
-    if (isRecurring) {
-        scheduleRecurringTransaction(transaction);
-    }
-    
-    displayTransactions();
-    updateSummary();
-    updateCharts();
-    updateProgressBars();
-    displayGoals();
-    
-    // Reset form
-    transactionForm.reset();
-    showNotification('Transaction added successfully');
 }
 
 // Enhanced transaction display
