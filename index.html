@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-wallet"></i>
+            <span>Finance Tracker</span>
+        </div>
+        <div class="nav-toggle">
+            <button id="navToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-items">
+                <a href="#dashboard" class="active">
+                    <i class="fas fa-chart-line"></i>
+                    Dashboard
+                </a>
+                <a href="#transactions">
+                    <i class="fas fa-exchange-alt"></i>
+                    Transactions
+                </a>
+                <a href="#goals">
+                    <i class="fas fa-bullseye"></i>
+                    Goals
+                </a>
+                <a href="#budget">
+                    <i class="fas fa-piggy-bank"></i>
+                    Budget
+                </a>
+                <a href="#reports">
+                    <i class="fas fa-file-alt"></i>
+                    Reports
+                </a>
+            </div>
+            <div class="nav-footer">
+                <button id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                    <span>Dark Mode</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>Take Control of Your Finances</h1>
+            <p>Track expenses, set goals, and achieve financial freedom with our comprehensive personal finance tracker.</p>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <i class="fas fa-wallet"></i>
+                    <div>
+                        <span class="stat-label">Current Balance</span>
+                        <span class="stat-value">₹<span id="totalBalance">0</span></span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-arrow-up"></i>
+                    <div>
+                        <span class="stat-label">Total Income</span>
+                        <span class="stat-value">₹<span id="totalIncome">0</span></span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-arrow-down"></i>
+                    <div>
+                        <span class="stat-label">Total Expenses</span>
+                        <span class="stat-value">₹<span id="totalExpenses">0</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <main>
+            <section id="dashboard" class="section active">
+                <div class="section-header">
+                    <h2>Dashboard Overview</h2>
+                    <div class="section-actions">
+                        <button id="exportPDFButton" class="btn-secondary">
+                            <i class="fas fa-file-pdf"></i> Export Report
+                        </button>
+                    </div>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="chart-container">
+                        <h3>Monthly Overview</h3>
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Expense Distribution</h3>
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="transactions" class="section">
+                <div class="section-header">
+                    <h2>Transactions</h2>
+                    <div class="section-actions">
+                        <button id="exportButton" class="btn-secondary">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="transaction-form">
+                    <form id="transactionForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <input type="text" id="description" placeholder="Description" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="number" id="amount" placeholder="Amount (₹)" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <select id="type" required>
+                                    <option value="income">Income</option>
+                                    <option value="expense">Expense</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <select id="category" required>
+                                    <option value="">Select Category</option>
+                                    <optgroup label="Income Categories">
+                                        <option value="salary">Salary</option>
+                                        <option value="freelance">Freelance</option>
+                                        <option value="investments">Investments</option>
+                                        <option value="other_income">Other Income</option>
+                                    </optgroup>
+                                    <optgroup label="Expense Categories">
+                                        <option value="food">Food & Dining</option>
+                                        <option value="transport">Transportation</option>
+                                        <option value="utilities">Utilities</option>
+                                        <option value="entertainment">Entertainment</option>
+                                        <option value="shopping">Shopping</option>
+                                        <option value="healthcare">Healthcare</option>
+                                        <option value="education">Education</option>
+                                        <option value="other_expense">Other Expenses</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="notes" placeholder="Add notes (optional)"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="recurring">
+                                    Recurring Transaction
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <select id="recurringFrequency" disabled>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Add Transaction</button>
+                    </form>
+                </div>
+
+                <div class="filters-section">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search transactions...">
+                    </div>
+                    <div class="date-filters">
+                        <div class="quick-filters">
+                            <button class="filter-btn" data-period="today">Today</button>
+                            <button class="filter-btn" data-period="week">This Week</button>
+                            <button class="filter-btn" data-period="month">This Month</button>
+                            <button class="filter-btn" data-period="year">This Year</button>
+                        </div>
+                        <div class="custom-date-filters">
+                            <input type="date" id="startDate">
+                            <input type="date" id="endDate">
+                            <select id="filterCategory">
+                                <option value="">All Categories</option>
+                            </select>
+                            <select id="filterType">
+                                <option value="">All Types</option>
+                                <option value="income">Income</option>
+                                <option value="expense">Expense</option>
+                            </select>
+                            <button id="filterButton" class="btn-secondary">Filter</button>
+                            <button id="resetButton" class="btn-secondary">Reset</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="transactions-section">
+                    <div class="section-header">
+                        <h3>Recent Transactions</h3>
+                        <div class="transaction-stats">
+                            <span>Total: <span id="transactionCount">0</span></span>
+                            <span>Average: ₹<span id="averageAmount">0</span></span>
+                        </div>
+                    </div>
+                    <div id="transactionsList"></div>
+                </div>
+            </section>
+
+            <section id="goals" class="section">
+                <div class="section-header">
+                    <h2>Financial Goals</h2>
+                </div>
+                <div class="goals-grid">
+                    <div class="goals-form">
+                        <form id="goalForm">
+                            <div class="form-group">
+                                <input type="text" id="goalName" placeholder="Goal Name" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <input type="number" id="goalAmount" placeholder="Target Amount (₹)" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="date" id="goalDate" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary">Add Goal</button>
+                        </form>
+                    </div>
+                    <div class="goals-list">
+                        <h4>Your Goals</h4>
+                        <div id="goalsList"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="budget" class="section">
+                <div class="section-header">
+                    <h2>Monthly Budget</h2>
+                </div>
+                <div class="budget-section">
+                    <div class="budget-grid">
+                        <div class="budget-item">
+                            <label>Monthly Income Target</label>
+                            <input type="number" id="monthlyIncomeTarget" placeholder="₹0">
+                        </div>
+                        <div class="budget-item">
+                            <label>Monthly Expense Limit</label>
+                            <input type="number" id="monthlyExpenseLimit" placeholder="₹0">
+                        </div>
+                        <div class="budget-progress">
+                            <div class="progress-bar">
+                                <div class="progress" id="incomeProgress"></div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress" id="expenseProgress"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="reports" class="section">
+                <div class="section-header">
+                    <h2>Financial Reports & Analytics</h2>
+                </div>
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <h3>Financial Health Score</h3>
+                        <div class="health-score">
+                            <div class="score-circle">
+                                <span id="healthScore">0</span>
+                                <span class="score-label">Score</span>
+                            </div>
+                            <div class="score-details">
+                                <div class="score-factor">
+                                    <span>Savings Rate</span>
+                                    <div class="progress-bar">
+                                        <div class="progress" id="savingsRateProgress"></div>
+                                    </div>
+                                </div>
+                                <div class="score-factor">
+                                    <span>Expense Control</span>
+                                    <div class="progress-bar">
+                                        <div class="progress" id="expenseControlProgress"></div>
+                                    </div>
+                                </div>
+                                <div class="score-factor">
+                                    <span>Income Growth</span>
+                                    <div class="progress-bar">
+                                        <div class="progress" id="incomeGrowthProgress"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="report-card">
+                        <h3>Predictive Insights</h3>
+                        <div class="insights-container">
+                            <div class="insight-item">
+                                <i class="fas fa-chart-line"></i>
+                                <div>
+                                    <h4>Monthly Projection</h4>
+                                    <p id="monthlyProjection">Calculating...</p>
+                                </div>
+                            </div>
+                            <div class="insight-item">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div>
+                                    <h4>Potential Issues</h4>
+                                    <p id="potentialIssues">No issues detected</p>
+                                </div>
+                            </div>
+                            <div class="insight-item">
+                                <i class="fas fa-lightbulb"></i>
+                                <div>
+                                    <h4>Smart Suggestions</h4>
+                                    <p id="smartSuggestions">Analyzing patterns...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="report-card">
+                        <h3>Investment Portfolio</h3>
+                        <div class="portfolio-summary">
+                            <div class="portfolio-stats">
+                                <div class="stat">
+                                    <span>Total Value</span>
+                                    <span id="portfolioValue">₹0</span>
+                                </div>
+                                <div class="stat">
+                                    <span>Returns</span>
+                                    <span id="portfolioReturns">0%</span>
+                                </div>
+                            </div>
+                            <div class="portfolio-chart">
+                                <canvas id="portfolioChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="report-card">
+                        <h3>Budget Analysis</h3>
+                        <div class="budget-analysis">
+                            <div class="analysis-item">
+                                <span>Spending Trends</span>
+                                <canvas id="spendingTrendChart"></canvas>
+                            </div>
+                            <div class="analysis-item">
+                                <span>Category Breakdown</span>
+                                <canvas id="categoryBreakdownChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="investments" class="section">
+                <div class="section-header">
+                    <h2>Investment Tracking</h2>
+                    <div class="section-actions">
+                        <button id="addInvestmentBtn" class="btn-primary">
+                            <i class="fas fa-plus"></i> Add Investment
+                        </button>
+                    </div>
+                </div>
+                <div class="investment-grid">
+                    <div class="investment-form">
+                        <form id="investmentForm">
+                            <div class="form-group">
+                                <input type="text" id="investmentName" placeholder="Investment Name" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <input type="number" id="investmentAmount" placeholder="Amount (₹)" required>
+                                </div>
+                                <div class="form-group">
+                                    <select id="investmentType" required>
+                                        <option value="">Select Type</option>
+                                        <option value="stocks">Stocks</option>
+                                        <option value="mutual_funds">Mutual Funds</option>
+                                        <option value="fixed_deposit">Fixed Deposit</option>
+                                        <option value="crypto">Cryptocurrency</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <input type="date" id="investmentDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <input type="number" id="expectedReturn" placeholder="Expected Return (%)" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary">Add Investment</button>
+                        </form>
+                    </div>
+                    <div class="investment-list">
+                        <h3>Your Investments</h3>
+                        <div id="investmentsList"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="bills" class="section">
+                <div class="section-header">
+                    <h2>Bill Management & Reminders</h2>
+                    <div class="section-actions">
+                        <button id="addBillBtn" class="btn-primary">
+                            <i class="fas fa-plus"></i> Add Bill
+                        </button>
+                    </div>
+                </div>
+                <div class="bills-grid">
+                    <div class="bills-form">
+                        <form id="billForm">
+                            <div class="form-group">
+                                <input type="text" id="billName" placeholder="Bill Name" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <input type="number" id="billAmount" placeholder="Amount (₹)" required>
+                                </div>
+                                <div class="form-group">
+                                    <select id="billCategory" required>
+                                        <option value="">Select Category</option>
+                                        <option value="utilities">Utilities</option>
+                                        <option value="rent">Rent</option>
+                                        <option value="insurance">Insurance</option>
+                                        <option value="subscription">Subscription</option>
+                                        <option value="loan">Loan</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <input type="date" id="billDueDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <select id="billFrequency" required>
+                                        <option value="one-time">One Time</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="quarterly">Quarterly</option>
+                                        <option value="yearly">Yearly</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="autoPay">
+                                    Enable Auto-Pay
+                                </label>
+                            </div>
+                            <button type="submit" class="btn-primary">Add Bill</button>
+                        </form>
+                    </div>
+                    <div class="bills-list">
+                        <div class="bills-filters">
+                            <select id="billStatusFilter">
+                                <option value="all">All Bills</option>
+                                <option value="upcoming">Upcoming</option>
+                                <option value="paid">Paid</option>
+                                <option value="overdue">Overdue</option>
+                            </select>
+                            <select id="billCategoryFilter">
+                                <option value="all">All Categories</option>
+                            </select>
+                        </div>
+                        <div id="billsList"></div>
+                        <div class="bills-summary">
+                            <div class="summary-item">
+                                <span>Total Upcoming</span>
+                                <span id="totalUpcomingBills">₹0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Total Overdue</span>
+                                <span id="totalOverdueBills">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="analytics" class="section">
+                <div class="section-header">
+                    <h2>Advanced Analytics</h2>
+                </div>
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Spending Patterns</h3>
+                        <div class="pattern-analysis">
+                            <div class="pattern-chart">
+                                <canvas id="spendingPatternChart"></canvas>
+                            </div>
+                            <div class="pattern-insights">
+                                <h4>Key Insights</h4>
+                                <div id="spendingInsights"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Budget Forecasting</h3>
+                        <div class="forecast-analysis">
+                            <div class="forecast-chart">
+                                <canvas id="budgetForecastChart"></canvas>
+                            </div>
+                            <div class="forecast-details">
+                                <h4>Projections</h4>
+                                <div id="budgetProjections"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Category Analysis</h3>
+                        <div class="category-analysis">
+                            <div class="category-chart">
+                                <canvas id="categoryAnalysisChart"></canvas>
+                            </div>
+                            <div class="category-details">
+                                <h4>Trends</h4>
+                                <div id="categoryTrends"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Savings Optimization</h3>
+                        <div class="savings-analysis">
+                            <div class="savings-chart">
+                                <canvas id="savingsOptimizationChart"></canvas>
+                            </div>
+                            <div class="savings-recommendations">
+                                <h4>Recommendations</h4>
+                                <div id="savingsRecommendations"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="settings" class="section">
+                <div class="section-header">
+                    <h2>Settings & Preferences</h2>
+                </div>
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h3>Account Settings</h3>
+                        <form id="accountSettingsForm">
+                            <div class="form-group">
+                                <label>Currency</label>
+                                <select id="currency">
+                                    <option value="INR">Indian Rupee (₹)</option>
+                                    <option value="USD">US Dollar ($)</option>
+                                    <option value="EUR">Euro (€)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Date Format</label>
+                                <select id="dateFormat">
+                                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Notifications</label>
+                                <div class="checkbox-group">
+                                    <label>
+                                        <input type="checkbox" id="budgetAlerts"> Budget Alerts
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" id="billReminders"> Bill Reminders
+                                    </label>
+                                    <label>
+                                        <input type="checkbox" id="investmentUpdates"> Investment Updates
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary">Save Settings</button>
+                        </form>
+                    </div>
+                    <div class="settings-card">
+                        <h3>Data Management</h3>
+                        <div class="data-actions">
+                            <button id="backupData" class="btn-secondary">
+                                <i class="fas fa-download"></i> Backup Data
+                            </button>
+                            <button id="restoreData" class="btn-secondary">
+                                <i class="fas fa-upload"></i> Restore Data
+                            </button>
+                            <button id="clearData" class="btn-secondary danger">
+                                <i class="fas fa-trash"></i> Clear All Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
