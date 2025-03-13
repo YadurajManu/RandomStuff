@@ -1664,4 +1664,35 @@ retirementForm.addEventListener('submit', calculateRetirement);
 
 // Initialize
 initializeAllocationSliders();
-updateTimelineView(); 
+updateTimelineView();
+
+// Add swipe gesture functionality
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    const swipeThreshold = 50; // Minimum distance for a swipe
+    const swipeDistance = touchEndX - touchStartX;
+    const navbar = document.querySelector('.navbar');
+    const navToggle = document.querySelector('.nav-toggle button');
+
+    // If swiping right and navbar is closed
+    if (swipeDistance > swipeThreshold && !navbar.classList.contains('active')) {
+        navbar.classList.add('active');
+        navToggle.setAttribute('aria-expanded', 'true');
+    }
+    // If swiping left and navbar is open
+    else if (swipeDistance < -swipeThreshold && navbar.classList.contains('active')) {
+        navbar.classList.remove('active');
+        navToggle.setAttribute('aria-expanded', 'false');
+    }
+} 

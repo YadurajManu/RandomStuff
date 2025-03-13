@@ -88,6 +88,7 @@ body {
     width: 40px;
     height: 40px;
     transition: background-color 0.3s;
+    box-shadow: 0 2px 4px var(--shadow-color);
 }
 
 .nav-toggle button:hover {
@@ -313,6 +314,15 @@ body {
 
     .navbar {
         transform: translateX(-100%);
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: var(--nav-width);
+        background-color: var(--card-bg);
+        border-right: 1px solid var(--border-color);
+        z-index: 1000;
+        transition: transform 0.3s;
     }
 
     .navbar.active {
