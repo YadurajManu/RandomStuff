@@ -1540,4 +1540,243 @@ button:hover {
     .slider-group {
         gap: 0.8rem;
     }
+}
+
+/* Transaction Styles */
+.transaction-date-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    margin-top: 1rem;
+}
+
+.date-label {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.date-summary {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.date-summary .income {
+    color: var(--trend-up);
+}
+
+.date-summary .expense {
+    color: var(--trend-down);
+}
+
+.transaction-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.3s;
+}
+
+.transaction-item:hover {
+    background-color: var(--shadow-color);
+}
+
+.transaction-item.recurring {
+    border-left: 3px solid var(--primary-color);
+}
+
+.transaction-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--background-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.transaction-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.transaction-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.transaction-header .description {
+    font-weight: 500;
+}
+
+.category-tag {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    background-color: var(--background-color);
+    border-radius: 4px;
+    color: var(--secondary-color);
+}
+
+.transaction-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--secondary-color);
+}
+
+.transaction-meta .time {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.transaction-meta .notes {
+    font-style: italic;
+}
+
+.recurring-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--primary-color);
+    font-size: 0.8rem;
+}
+
+.transaction-amount {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.transaction-amount .income {
+    color: var(--trend-up);
+    font-weight: 500;
+}
+
+.transaction-amount .expense {
+    color: var(--trend-down);
+    font-weight: 500;
+}
+
+.transaction-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.transaction-actions button {
+    background: none;
+    border: none;
+    color: var(--secondary-color);
+    cursor: pointer;
+    padding: 0.3rem;
+    transition: color 0.3s;
+}
+
+.transaction-actions button:hover {
+    color: var(--primary-color);
+}
+
+.transaction-actions .delete-btn:hover {
+    color: var(--trend-down);
+}
+
+.no-transactions {
+    text-align: center;
+    padding: 3rem;
+    color: var(--secondary-color);
+}
+
+.no-transactions i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Transaction Stats */
+.transaction-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.transaction-stats .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.transaction-stats .stat-label {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+.transaction-stats .stat-value {
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.transaction-stats .stat-value.income {
+    color: var(--trend-up);
+}
+
+.transaction-stats .stat-value.expense {
+    color: var(--trend-down);
+}
+
+/* Form Validation Styles */
+.form-group.error input,
+.form-group.error select,
+.form-group.error textarea {
+    border-color: var(--trend-down);
+}
+
+.error-message {
+    color: var(--trend-down);
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .transaction-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+
+    .transaction-amount {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .transaction-meta {
+        flex-wrap: wrap;
+    }
+
+    .transaction-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .date-summary {
+        flex-direction: column;
+        gap: 0.3rem;
+    }
 } 

@@ -451,11 +451,24 @@ function displayGoals() {
 function addTransaction(e) {
     e.preventDefault();
     
-    const description = document.getElementById('description').value;
+    // Form validation
+    const description = document.getElementById('description').value.trim();
     const amount = parseFloat(document.getElementById('amount').value);
     const type = document.getElementById('type').value;
     const category = document.getElementById('category').value;
-    const notes = document.getElementById('notes').value;
+    const notes = document.getElementById('notes').value.trim();
+    const isRecurring = document.getElementById('recurring').checked;
+    const recurringFrequency = document.getElementById('recurringFrequency').value;
+    
+    if (!description || !amount || !category) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    if (amount <= 0) {
+        showNotification('Amount must be greater than 0', 'error');
+        return;
+    }
     
     const transaction = {
         id: Date.now(),
@@ -464,9 +477,14 @@ function addTransaction(e) {
         type,
         category,
         notes,
-        date: new Date().toLocaleDateString(),
-        recurring: document.getElementById('recurring').checked,
-        recurringFrequency: document.getElementById('recurringFrequency').value
+        date: new Date().toISOString(),
+        recurring: isRecurring,
+        recurringFrequency: isRecurring ? recurringFrequency : null,
+        status: 'completed',
+        tags: [], // For future categorization
+        attachments: [], // For future receipt uploads
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
     };
     
     transactions.push(transaction);
@@ -478,6 +496,11 @@ function addTransaction(e) {
         localStorage.setItem('savings', savings);
     }
     
+    // Handle recurring transaction
+    if (isRecurring) {
+        scheduleRecurringTransaction(transaction);
+    }
+    
     displayTransactions();
     updateSummary();
     updateCharts();
@@ -486,6 +509,220 @@ function addTransaction(e) {
     
     // Reset form
     transactionForm.reset();
+    showNotification('Transaction added successfully');
+}
+
+// Enhanced transaction display
+function displayTransactions() {
+    transactionsList.innerHTML = '';
+    
+    const filteredTransactions = filterTransactions();
+    
+    if (filteredTransactions.length === 0) {
+        transactionsList.innerHTML = `
+            <div class="no-transactions">
+                <i class="fas fa-receipt"></i>
+                <p>No transactions found</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Group transactions by date
+    const groupedTransactions = groupTransactionsByDate(filteredTransactions);
+    
+    Object.entries(groupedTransactions).forEach(([date, transactions]) => {
+        const dateHeader = document.createElement('div');
+        dateHeader.className = 'transaction-date-header';
+        dateHeader.innerHTML = `
+            <div class="date-label">${formatDate(new Date(date))}</div>
+            <div class="date-summary">
+                <span class="income">+₹${calculateDateTotal(transactions, 'income').toFixed(2)}</span>
+                <span class="expense">-₹${calculateDateTotal(transactions, 'expense').toFixed(2)}</span>
+            </div>
+        `;
+        transactionsList.appendChild(dateHeader);
+        
+        transactions.forEach(transaction => {
+            const item = document.createElement('div');
+            item.classList.add('transaction-item');
+            if (transaction.recurring) {
+                item.classList.add('recurring');
+            }
+            
+            const sign = transaction.type === 'income' ? '+' : '-';
+            const amountClass = transaction.type === 'income' ? 'income' : 'expense';
+            
+            item.innerHTML = `
+                <div class="transaction-icon">
+                    <i class="fas ${getCategoryIcon(transaction.category)}"></i>
+                </div>
+                <div class="transaction-details">
+                    <div class="transaction-header">
+                        <span class="description">${transaction.description}</span>
+                        <span class="category-tag">${transaction.category}</span>
+                    </div>
+                    <div class="transaction-meta">
+                        <span class="time">${formatTime(new Date(transaction.date))}</span>
+                        ${transaction.notes ? `<span class="notes">${transaction.notes}</span>` : ''}
+                        ${transaction.recurring ? `
+                            <span class="recurring-badge">
+                                <i class="fas fa-sync"></i> ${transaction.recurringFrequency}
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="transaction-amount">
+                    <span class="${amountClass}">${sign}₹${transaction.amount.toFixed(2)}</span>
+                    <div class="transaction-actions">
+                        <button class="edit-btn" onclick="editTransaction(${transaction.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="delete-btn" onclick="deleteTransaction(${transaction.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            transactionsList.appendChild(item);
+        });
+    });
+
+    // Update transaction stats
+    updateTransactionStats(filteredTransactions);
+}
+
+// Helper functions for transaction display
+function groupTransactionsByDate(transactions) {
+    return transactions.reduce((groups, transaction) => {
+        const date = new Date(transaction.date).toISOString().split('T')[0];
+        if (!groups[date]) {
+            groups[date] = [];
+        }
+        groups[date].push(transaction);
+        return groups;
+    }, {});
+}
+
+function calculateDateTotal(transactions, type) {
+    return transactions
+        .filter(t => t.type === type)
+        .reduce((sum, t) => sum + t.amount, 0);
+}
+
+function getCategoryIcon(category) {
+    const icons = {
+        salary: 'fa-briefcase',
+        freelance: 'fa-laptop',
+        investments: 'fa-chart-line',
+        food: 'fa-utensils',
+        transport: 'fa-car',
+        utilities: 'fa-bolt',
+        entertainment: 'fa-film',
+        shopping: 'fa-shopping-bag',
+        healthcare: 'fa-heartbeat',
+        education: 'fa-graduation-cap',
+        other_income: 'fa-money-bill-wave',
+        other_expense: 'fa-receipt'
+    };
+    return icons[category] || 'fa-receipt';
+}
+
+function formatDate(date) {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+        return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+    } else {
+        return date.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+    }
+}
+
+function formatTime(date) {
+    return date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit' 
+    });
+}
+
+function updateTransactionStats(transactions) {
+    const total = transactions.length;
+    const income = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+    const expenses = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+    const average = total > 0 ? (income + expenses) / total : 0;
+    
+    transactionCount.textContent = total;
+    averageAmount.textContent = average.toFixed(2);
+    
+    // Update transaction summary
+    const summary = document.querySelector('.transaction-stats');
+    summary.innerHTML = `
+        <div class="stat-item">
+            <span class="stat-label">Total Income</span>
+            <span class="stat-value income">+₹${income.toFixed(2)}</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Total Expenses</span>
+            <span class="stat-value expense">-₹${expenses.toFixed(2)}</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Net</span>
+            <span class="stat-value ${income - expenses >= 0 ? 'income' : 'expense'}">
+                ${income - expenses >= 0 ? '+' : '-'}₹${Math.abs(income - expenses).toFixed(2)}
+            </span>
+        </div>
+    `;
+}
+
+// Recurring transaction handling
+function scheduleRecurringTransaction(transaction) {
+    const nextDate = calculateNextRecurringDate(transaction);
+    if (nextDate) {
+        const scheduledTransaction = {
+            ...transaction,
+            id: Date.now() + 1,
+            date: nextDate.toISOString(),
+            status: 'scheduled',
+            isRecurringInstance: true
+        };
+        transactions.push(scheduledTransaction);
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+    }
+}
+
+function calculateNextRecurringDate(transaction) {
+    const date = new Date(transaction.date);
+    const frequency = transaction.recurringFrequency;
+    
+    switch (frequency) {
+        case 'daily':
+            date.setDate(date.getDate() + 1);
+            break;
+        case 'weekly':
+            date.setDate(date.getDate() + 7);
+            break;
+        case 'monthly':
+            date.setMonth(date.getMonth() + 1);
+            break;
+        case 'yearly':
+            date.setFullYear(date.getFullYear() + 1);
+            break;
+    }
+    
+    return date;
 }
 
 // Delete transaction
@@ -496,44 +733,6 @@ function deleteTransaction(id) {
     updateSummary();
     updateCharts();
     updateProgressBars();
-}
-
-// Display transactions
-function displayTransactions() {
-    transactionsList.innerHTML = '';
-    
-    const filteredTransactions = filterTransactions();
-    
-    filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(transaction => {
-        const sign = transaction.type === 'income' ? '+' : '-';
-        const item = document.createElement('div');
-        item.classList.add('transaction-item');
-        
-        item.innerHTML = `
-            <div>
-                <div>
-                    ${transaction.description}
-                    <span class="category-tag">${transaction.category}</span>
-                </div>
-                <div style="font-size: 0.8rem; color: var(--secondary-color);">
-                    ${transaction.date}
-                    ${transaction.notes ? `<br>${transaction.notes}` : ''}
-                </div>
-            </div>
-            <div>
-                <span class="${transaction.type}">${sign}₹${transaction.amount.toFixed(2)}</span>
-                <button class="delete-btn" onclick="deleteTransaction(${transaction.id})">×</button>
-            </div>
-        `;
-        
-        transactionsList.appendChild(item);
-    });
-
-    // Update transaction stats
-    transactionCount.textContent = filteredTransactions.length;
-    const average = filteredTransactions.reduce((sum, t) => sum + t.amount, 0) / 
-                   (filteredTransactions.length || 1);
-    averageAmount.textContent = average.toFixed(2);
 }
 
 // Export to CSV
