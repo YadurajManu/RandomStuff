@@ -68,17 +68,30 @@ body {
 
 .nav-toggle {
     display: none;
-    padding: 1rem;
-    text-align: right;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
 }
 
 .nav-toggle button {
-    background: none;
-    border: none;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     color: var(--text-color);
     font-size: 1.5rem;
     cursor: pointer;
     padding: 0.5rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    transition: background-color 0.3s;
+}
+
+.nav-toggle button:hover {
+    background-color: var(--shadow-color);
 }
 
 .nav-menu {
@@ -294,6 +307,10 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .nav-toggle {
+        display: block;
+    }
+
     .navbar {
         transform: translateX(-100%);
     }
@@ -302,13 +319,10 @@ body {
         transform: translateX(0);
     }
 
-    .nav-toggle {
-        display: block;
-    }
-
     .hero-section,
     .container {
         margin-left: 0;
+        padding-top: 4rem;
     }
 
     .hero-stats {
