@@ -1107,17 +1107,6 @@ function applySettings() {
     });
 }
 
-function formatDate(date, format) {
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    
-    return format
-        .replace('DD', day)
-        .replace('MM', month)
-        .replace('YYYY', year);
-}
-
 // Data Management
 function backupData() {
     const data = {
