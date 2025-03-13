@@ -19,6 +19,9 @@ let settings = JSON.parse(localStorage.getItem('settings')) || {
     }
 };
 
+// Initialize bills from localStorage
+let bills = JSON.parse(localStorage.getItem('bills')) || [];
+
 // DOM Elements
 const transactionForm = document.getElementById('transactionForm');
 const transactionsList = document.getElementById('transactionsList');
@@ -52,6 +55,19 @@ const accountSettingsForm = document.getElementById('accountSettingsForm');
 const backupDataBtn = document.getElementById('backupData');
 const restoreDataBtn = document.getElementById('restoreData');
 const clearDataBtn = document.getElementById('clearData');
+const billForm = document.getElementById('billForm');
+const billsList = document.getElementById('billsList');
+const billStatusFilter = document.getElementById('billStatusFilter');
+const billCategoryFilter = document.getElementById('billCategoryFilter');
+const totalUpcomingBills = document.getElementById('totalUpcomingBills');
+const totalOverdueBills = document.getElementById('totalOverdueBills');
+
+// Financial Planning Section
+const monthlyIncomeInput = document.getElementById('monthlyIncome');
+const allocationSliders = document.querySelectorAll('.allocation-slider');
+const timelineFilter = document.getElementById('timelineFilter');
+const emergencyForm = document.getElementById('emergencyForm');
+const retirementForm = document.getElementById('retirementForm');
 
 // Navigation handling
 function toggleNav() {
@@ -985,4 +1001,468 @@ calculateHealthScore();
 generateInsights();
 displayInvestments();
 updatePortfolioSummary();
-applySettings(); 
+applySettings();
+
+// Bill Management Functions
+function addBill(e) {
+    e.preventDefault();
+    
+    const bill = {
+        id: Date.now(),
+        name: document.getElementById('billName').value,
+        amount: parseFloat(document.getElementById('billAmount').value),
+        category: document.getElementById('billCategory').value,
+        dueDate: document.getElementById('billDueDate').value,
+        frequency: document.getElementById('billFrequency').value,
+        autoPay: document.getElementById('autoPay').checked,
+        status: 'upcoming',
+        paidDate: null
+    };
+    
+    bills.push(bill);
+    localStorage.setItem('bills', JSON.stringify(bills));
+    
+    displayBills();
+    updateBillSummary();
+    showNotification('Bill added successfully');
+    
+    billForm.reset();
+}
+
+function updateBillStatus(id, status) {
+    const bill = bills.find(b => b.id === id);
+    if (bill) {
+        bill.status = status;
+        bill.paidDate = status === 'paid' ? new Date().toISOString() : null;
+        localStorage.setItem('bills', JSON.stringify(bills));
+        displayBills();
+        updateBillSummary();
+        showNotification('Bill status updated');
+    }
+}
+
+function deleteBill(id) {
+    bills = bills.filter(bill => bill.id !== id);
+    localStorage.setItem('bills', JSON.stringify(bills));
+    displayBills();
+    updateBillSummary();
+    showNotification('Bill deleted');
+}
+
+function displayBills() {
+    billsList.innerHTML = '';
+    
+    const statusFilter = billStatusFilter.value;
+    const categoryFilter = billCategoryFilter.value;
+    
+    const filteredBills = bills.filter(bill => {
+        const matchesStatus = statusFilter === 'all' || bill.status === statusFilter;
+        const matchesCategory = categoryFilter === 'all' || bill.category === categoryFilter;
+        return matchesStatus && matchesCategory;
+    });
+    
+    filteredBills.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).forEach(bill => {
+        const item = document.createElement('div');
+        item.classList.add('bill-item');
+        
+        const dueDate = new Date(bill.dueDate);
+        const daysUntilDue = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
+        
+        item.innerHTML = `
+            <div class="bill-info">
+                <div class="bill-name">${bill.name}</div>
+                <div class="bill-details">
+                    ₹${bill.amount.toFixed(2)} • ${bill.category} • Due: ${formatDate(dueDate)}
+                    ${bill.autoPay ? ' • Auto-Pay Enabled' : ''}
+                </div>
+            </div>
+            <div class="bill-actions">
+                <span class="bill-status status-${bill.status}">${bill.status}</span>
+                ${bill.status === 'upcoming' ? `
+                    <button onclick="updateBillStatus(${bill.id}, 'paid')" class="btn-secondary">
+                        Mark as Paid
+                    </button>
+                ` : ''}
+                <button onclick="deleteBill(${bill.id})" class="delete-btn">×</button>
+            </div>
+        `;
+        
+        billsList.appendChild(item);
+    });
+}
+
+function updateBillSummary() {
+    const upcomingTotal = bills
+        .filter(bill => bill.status === 'upcoming')
+        .reduce((sum, bill) => sum + bill.amount, 0);
+    
+    const overdueTotal = bills
+        .filter(bill => {
+            const dueDate = new Date(bill.dueDate);
+            return bill.status === 'upcoming' && dueDate < new Date();
+        })
+        .reduce((sum, bill) => sum + bill.amount, 0);
+    
+    totalUpcomingBills.textContent = `₹${upcomingTotal.toFixed(2)}`;
+    totalOverdueBills.textContent = `₹${overdueTotal.toFixed(2)}`;
+}
+
+// Advanced Analytics Functions
+function initializeAnalyticsCharts() {
+    // Spending Pattern Chart
+    const patternCtx = document.getElementById('spendingPatternChart').getContext('2d');
+    new Chart(patternCtx, {
+        type: 'line',
+        data: {
+            labels: getLastMonths(6),
+            datasets: [{
+                label: 'Spending',
+                data: calculateMonthlySpending(),
+                borderColor: '#000000',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Budget Forecast Chart
+    const forecastCtx = document.getElementById('budgetForecastChart').getContext('2d');
+    new Chart(forecastCtx, {
+        type: 'bar',
+        data: {
+            labels: getNextMonths(3),
+            datasets: [{
+                label: 'Projected Income',
+                data: forecastIncome(),
+                backgroundColor: '#000000'
+            }, {
+                label: 'Projected Expenses',
+                data: forecastExpenses(),
+                backgroundColor: '#666666'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Category Analysis Chart
+    const categoryCtx = document.getElementById('categoryAnalysisChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: getExpenseCategories(),
+            datasets: [{
+                data: calculateCategoryTotals(),
+                backgroundColor: [
+                    '#000000',
+                    '#333333',
+                    '#666666',
+                    '#999999',
+                    '#CCCCCC'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+
+    // Savings Optimization Chart
+    const savingsCtx = document.getElementById('savingsOptimizationChart').getContext('2d');
+    new Chart(savingsCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Current', 'Optimized'],
+            datasets: [{
+                label: 'Savings Potential',
+                data: calculateSavingsPotential(),
+                backgroundColor: '#000000'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function getLastMonths(count) {
+    const months = [];
+    for (let i = count - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        months.push(date.toLocaleString('default', { month: 'short' }));
+    }
+    return months;
+}
+
+function getNextMonths(count) {
+    const months = [];
+    for (let i = 1; i <= count; i++) {
+        const date = new Date();
+        date.setMonth(date.getMonth() + i);
+        months.push(date.toLocaleString('default', { month: 'short' }));
+    }
+    return months;
+}
+
+function calculateMonthlySpending() {
+    const lastMonths = getLastMonths(6);
+    return lastMonths.map(month => {
+        const monthTransactions = transactions.filter(t => {
+            const date = new Date(t.date);
+            return date.toLocaleString('default', { month: 'short' }) === month &&
+                   t.type === 'expense';
+        });
+        return monthTransactions.reduce((sum, t) => sum + t.amount, 0);
+    });
+}
+
+function forecastIncome() {
+    const currentIncome = transactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + t.amount, 0);
+    
+    return [currentIncome, currentIncome * 1.05, currentIncome * 1.1];
+}
+
+function forecastExpenses() {
+    const currentExpenses = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + t.amount, 0);
+    
+    return [currentExpenses, currentExpenses * 1.02, currentExpenses * 1.04];
+}
+
+function getExpenseCategories() {
+    return [...new Set(transactions
+        .filter(t => t.type === 'expense')
+        .map(t => t.category))];
+}
+
+function calculateCategoryTotals() {
+    const categories = getExpenseCategories();
+    return categories.map(category => 
+        transactions
+            .filter(t => t.type === 'expense' && t.category === category)
+            .reduce((sum, t) => sum + t.amount, 0)
+    );
+}
+
+function calculateSavingsPotential() {
+    const currentSavings = savings;
+    const potentialSavings = currentSavings * 1.2; // 20% increase potential
+    
+    return [currentSavings, potentialSavings];
+}
+
+function generateAnalyticsInsights() {
+    // Spending Pattern Insights
+    const spendingInsights = document.getElementById('spendingInsights');
+    const monthlySpending = calculateMonthlySpending();
+    const trend = monthlySpending[monthlySpending.length - 1] - monthlySpending[0];
+    
+    spendingInsights.innerHTML = `
+        <div class="insight-item ${trend > 0 ? 'negative' : 'positive'}">
+            <i class="fas ${trend > 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
+            <span>${Math.abs(trend).toFixed(2)}% ${trend > 0 ? 'increase' : 'decrease'} in spending over 6 months</span>
+        </div>
+    `;
+
+    // Budget Projections
+    const budgetProjections = document.getElementById('budgetProjections');
+    const projectedIncome = forecastIncome();
+    const projectedExpenses = forecastExpenses();
+    
+    budgetProjections.innerHTML = `
+        <div class="insight-item ${projectedIncome[2] > projectedExpenses[2] ? 'positive' : 'negative'}">
+            <i class="fas fa-chart-line"></i>
+            <span>Projected savings in 3 months: ₹${(projectedIncome[2] - projectedExpenses[2]).toFixed(2)}</span>
+        </div>
+    `;
+
+    // Category Trends
+    const categoryTrends = document.getElementById('categoryTrends');
+    const categories = getExpenseCategories();
+    const categoryTotals = calculateCategoryTotals();
+    const maxCategory = categories[categoryTotals.indexOf(Math.max(...categoryTotals))];
+    
+    categoryTrends.innerHTML = `
+        <div class="insight-item neutral">
+            <i class="fas fa-tag"></i>
+            <span>Highest spending category: ${maxCategory}</span>
+        </div>
+    `;
+
+    // Savings Recommendations
+    const savingsRecommendations = document.getElementById('savingsRecommendations');
+    const potentialSavings = calculateSavingsPotential();
+    const savingsIncrease = potentialSavings[1] - potentialSavings[0];
+    
+    savingsRecommendations.innerHTML = `
+        <div class="insight-item positive">
+            <i class="fas fa-piggy-bank"></i>
+            <span>Potential savings increase: ₹${savingsIncrease.toFixed(2)}</span>
+        </div>
+    `;
+}
+
+// Event Listeners
+billForm.addEventListener('submit', addBill);
+billStatusFilter.addEventListener('change', displayBills);
+billCategoryFilter.addEventListener('change', displayBills);
+
+// Initialize new features
+displayBills();
+updateBillSummary();
+initializeAnalyticsCharts();
+generateAnalyticsInsights();
+
+// Initialize allocation sliders
+function initializeAllocationSliders() {
+    const totalPercentage = 100;
+    let currentTotal = 0;
+    
+    allocationSliders.forEach(slider => {
+        slider.addEventListener('input', () => {
+            const value = parseInt(slider.value);
+            const label = slider.nextElementSibling;
+            label.textContent = `${value}%`;
+            
+            // Calculate total percentage
+            currentTotal = Array.from(allocationSliders)
+                .reduce((sum, s) => sum + parseInt(s.value), 0);
+            
+            // Update remaining percentage
+            const remaining = totalPercentage - currentTotal;
+            const remainingLabel = document.querySelector('.remaining-percentage');
+            remainingLabel.textContent = `${remaining}%`;
+            
+            // Disable/enable sliders based on total
+            if (currentTotal >= totalPercentage) {
+                allocationSliders.forEach(s => {
+                    if (s !== slider && parseInt(s.value) > 0) {
+                        s.disabled = true;
+                    }
+                });
+            } else {
+                allocationSliders.forEach(s => s.disabled = false);
+            }
+        });
+    });
+}
+
+// Timeline view functionality
+function updateTimelineView() {
+    const filter = timelineFilter.value;
+    const timelineList = document.getElementById('timelineList');
+    timelineList.innerHTML = '';
+    
+    const filteredGoals = goals.filter(goal => {
+        const monthsUntilTarget = (new Date(goal.targetDate) - new Date()) / (1000 * 60 * 60 * 24 * 30);
+        switch(filter) {
+            case 'short':
+                return monthsUntilTarget <= 12;
+            case 'medium':
+                return monthsUntilTarget > 12 && monthsUntilTarget <= 36;
+            case 'long':
+                return monthsUntilTarget > 36;
+            default:
+                return true;
+        }
+    });
+    
+    filteredGoals.forEach(goal => {
+        const timelineItem = document.createElement('div');
+        timelineItem.className = 'timeline-item';
+        timelineItem.innerHTML = `
+            <h4>${goal.name}</h4>
+            <p>Target: $${goal.targetAmount.toLocaleString()}</p>
+            <p>Current: $${goal.currentAmount.toLocaleString()}</p>
+            <p>Target Date: ${new Date(goal.targetDate).toLocaleDateString()}</p>
+            <div class="progress-bar">
+                <div class="progress" style="width: ${(goal.currentAmount / goal.targetAmount) * 100}%"></div>
+            </div>
+        `;
+        timelineList.appendChild(timelineItem);
+    });
+}
+
+// Emergency Fund Calculator
+function calculateEmergencyFund(e) {
+    e.preventDefault();
+    const monthlyExpenses = parseFloat(document.getElementById('monthlyExpenses').value);
+    const monthsCoverage = parseInt(document.getElementById('monthsCoverage').value);
+    
+    const emergencyFund = monthlyExpenses * monthsCoverage;
+    const resultDisplay = document.getElementById('emergencyResult');
+    
+    resultDisplay.innerHTML = `
+        <h4>Emergency Fund Calculation</h4>
+        <p>Recommended Emergency Fund: $${emergencyFund.toLocaleString()}</p>
+        <p>Monthly Contribution Needed: $${(emergencyFund / 12).toLocaleString()}</p>
+        <p>Time to Build (12 months): $${(emergencyFund / 12).toLocaleString()} per month</p>
+    `;
+}
+
+// Retirement Calculator
+function calculateRetirement(e) {
+    e.preventDefault();
+    const currentAge = parseInt(document.getElementById('currentAge').value);
+    const retirementAge = parseInt(document.getElementById('retirementAge').value);
+    const monthlyContribution = parseFloat(document.getElementById('monthlyContribution').value);
+    const expectedReturn = parseFloat(document.getElementById('expectedReturn').value) / 100;
+    
+    const yearsUntilRetirement = retirementAge - currentAge;
+    const monthlyReturn = expectedReturn / 12;
+    const totalMonths = yearsUntilRetirement * 12;
+    
+    // Calculate future value of contributions
+    const futureValue = monthlyContribution * 
+        ((Math.pow(1 + monthlyReturn, totalMonths) - 1) / monthlyReturn);
+    
+    const resultDisplay = document.getElementById('retirementResult');
+    
+    resultDisplay.innerHTML = `
+        <h4>Retirement Savings Projection</h4>
+        <p>Total Contributions: $${(monthlyContribution * totalMonths).toLocaleString()}</p>
+        <p>Projected Balance: $${futureValue.toLocaleString()}</p>
+        <p>Interest Earned: $${(futureValue - (monthlyContribution * totalMonths)).toLocaleString()}</p>
+        <p>Monthly Income at 4% Withdrawal: $${(futureValue * 0.04 / 12).toLocaleString()}</p>
+    `;
+}
+
+// Event Listeners
+timelineFilter.addEventListener('change', updateTimelineView);
+emergencyForm.addEventListener('submit', calculateEmergencyFund);
+retirementForm.addEventListener('submit', calculateRetirement);
+
+// Initialize
+initializeAllocationSliders();
+updateTimelineView(); 

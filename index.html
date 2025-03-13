@@ -548,6 +548,108 @@
                 </div>
             </section>
 
+            <section id="financial-planning" class="section">
+                <div class="section-header">
+                    <h2>Financial Planning & Budgeting</h2>
+                </div>
+                <div class="planning-grid">
+                    <div class="planning-card">
+                        <h3>Budget Allocation</h3>
+                        <div class="allocation-form">
+                            <form id="allocationForm">
+                                <div class="form-group">
+                                    <label>Monthly Income</label>
+                                    <input type="number" id="monthlyIncome" placeholder="Enter monthly income">
+                                </div>
+                                <div class="allocation-sliders">
+                                    <div class="slider-group">
+                                        <label>Essential Expenses</label>
+                                        <input type="range" id="essentialSlider" min="0" max="100" value="50">
+                                        <span id="essentialValue">50%</span>
+                                    </div>
+                                    <div class="slider-group">
+                                        <label>Savings</label>
+                                        <input type="range" id="savingsSlider" min="0" max="100" value="20">
+                                        <span id="savingsValue">20%</span>
+                                    </div>
+                                    <div class="slider-group">
+                                        <label>Investments</label>
+                                        <input type="range" id="investmentSlider" min="0" max="100" value="15">
+                                        <span id="investmentValue">15%</span>
+                                    </div>
+                                    <div class="slider-group">
+                                        <label>Discretionary</label>
+                                        <input type="range" id="discretionarySlider" min="0" max="100" value="15">
+                                        <span id="discretionaryValue">15%</span>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-primary">Save Allocation</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="planning-card">
+                        <h3>Financial Goals Timeline</h3>
+                        <div class="timeline-view">
+                            <div class="timeline-filters">
+                                <select id="timelineFilter">
+                                    <option value="all">All Goals</option>
+                                    <option value="short">Short Term</option>
+                                    <option value="medium">Medium Term</option>
+                                    <option value="long">Long Term</option>
+                                </select>
+                            </div>
+                            <div id="timelineList"></div>
+                        </div>
+                    </div>
+                    <div class="planning-card">
+                        <h3>Emergency Fund Calculator</h3>
+                        <div class="emergency-calculator">
+                            <form id="emergencyForm">
+                                <div class="form-group">
+                                    <label>Monthly Expenses</label>
+                                    <input type="number" id="monthlyExpenses" placeholder="Enter monthly expenses">
+                                </div>
+                                <div class="form-group">
+                                    <label>Months of Coverage</label>
+                                    <select id="coverageMonths">
+                                        <option value="3">3 Months</option>
+                                        <option value="6">6 Months</option>
+                                        <option value="12">12 Months</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn-primary">Calculate</button>
+                                <div id="emergencyResult" class="result-display"></div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="planning-card">
+                        <h3>Retirement Planning</h3>
+                        <div class="retirement-calculator">
+                            <form id="retirementForm">
+                                <div class="form-group">
+                                    <label>Current Age</label>
+                                    <input type="number" id="currentAge" placeholder="Enter current age">
+                                </div>
+                                <div class="form-group">
+                                    <label>Retirement Age</label>
+                                    <input type="number" id="retirementAge" placeholder="Enter retirement age">
+                                </div>
+                                <div class="form-group">
+                                    <label>Monthly Contribution</label>
+                                    <input type="number" id="monthlyContribution" placeholder="Enter monthly contribution">
+                                </div>
+                                <div class="form-group">
+                                    <label>Expected Return Rate (%)</label>
+                                    <input type="number" id="returnRate" placeholder="Enter expected return rate">
+                                </div>
+                                <button type="submit" class="btn-primary">Calculate</button>
+                                <div id="retirementResult" class="result-display"></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section id="settings" class="section">
                 <div class="section-header">
                     <h2>Settings & Preferences</h2>
